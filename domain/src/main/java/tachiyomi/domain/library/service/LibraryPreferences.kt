@@ -195,7 +195,7 @@ class LibraryPreferences(
 
     fun duplicateMatchLevel() = preferenceStore.getEnum(
         "pref_duplicate_automatic_match",
-        DuplicateMatchLevel.FuzzyTitle
+        DuplicateMatchLevel.FuzzyTitle,
     )
 
     // endregion
