@@ -72,10 +72,9 @@ object SettingsBrowseScreen : SearchableSettings {
                     Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.parental_controls_info)),
                 ),
             ),
-            getMigrationCategory(sourcePreferences)
+            getMigrationCategory(sourcePreferences),
         )
     }
-
 
     @Composable
     fun getMigrationCategory(sourcePreferences: SourcePreferences): Preference.PreferenceGroup {
