@@ -38,6 +38,7 @@ fun MangaToolbar(
     onClickRefresh: () -> Unit,
     onClickMigrate: (() -> Unit)?,
     onClickEditNotes: () -> Unit,
+    onClickEditInfo: (() -> Unit)?, // ADDED: Callback for the new "Edit info" action
 
     // For action mode
     actionModeCounter: Int,
@@ -117,6 +118,15 @@ fun MangaToolbar(
                             onClick = onClickRefresh,
                         ),
                     )
+                    // ADDED: The "Edit info" action to the overflow menu
+                    if (onClickEditInfo != null) {
+                        add(
+                            AppBar.OverflowAction(
+                                title = stringResource(MR.strings.action_edit_info),
+                                onClick = onClickEditInfo,
+                            ),
+                        )
+                    }
                     if (onClickEditCategory != null) {
                         add(
                             AppBar.OverflowAction(
