@@ -55,18 +55,19 @@ BEGIN
   WHERE _id = new._id;
 END;
 
+-- FIX: 優化了 TRIGGER 的比較邏輯，使用 IS DISTINCT FROM 來安全地比較可能為 NULL 的值
 CREATE TRIGGER update_manga_version AFTER UPDATE ON mangas
 BEGIN
     UPDATE mangas SET version = version + 1
     WHERE _id = new._id AND new.is_syncing = 0 AND (
-        new.url != old.url OR
-        new.description != old.description OR
-        new.favorite != old.favorite OR
+        new.url IS DISTINCT FROM old.url OR
+        new.description IS DISTINCT FROM old.description OR
+        new.favorite IS DISTINCT FROM old.favorite OR
         -- 當自定義欄位變更時，也更新版本號
-        new.custom_title IS NOT old.custom_title OR
-        new.custom_author IS NOT old.custom_author OR
-        new.custom_artist IS NOT old.custom_artist OR
-        new.custom_description IS NOT old.custom_description
+        new.custom_title IS DISTINCT FROM old.custom_title OR
+        new.custom_author IS DISTINCT FROM old.custom_author OR
+        new.custom_artist IS DISTINCT FROM old.custom_artist OR
+        new.custom_description IS DISTINCT FROM old.custom_description
     );
 END;
 
@@ -163,6 +164,7 @@ insert:
 INSERT INTO mangas(source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added, update_strategy, calculate_interval, last_modified_at, version)
 VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version);
 
+-- FIX: 修正了整個 update 查詢，使其語法正確
 update: (
     url TEXT,
     source INTEGER,
@@ -197,7 +199,7 @@ UPDATE mangas SET
     last_update = :last_update,
     next_update = :next_update,
     date_added = :date_added,
-    viewer_flags = :viewer_flags,
+    viewer = :viewer_flags, -- <-- 主要修正點：欄位名稱是 viewer
     chapter_flags = :chapter_flags,
     cover_last_modified = :cover_last_modified,
     title = :title,
