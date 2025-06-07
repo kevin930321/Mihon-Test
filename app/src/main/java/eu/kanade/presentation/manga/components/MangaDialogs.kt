@@ -5,13 +5,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -22,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.domain.manga.interactor.FetchInterval
+import tachiyomi.domain.manga.model.Manga
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.WheelTextPicker
 import tachiyomi.presentation.core.components.material.padding
@@ -146,6 +151,89 @@ fun SetIntervalDialog(
                 onDismissRequest()
             }) {
                 Text(text = stringResource(MR.strings.action_ok))
+            }
+        },
+    )
+}
+
+/**
+ * 新增的對話框，用於編輯漫畫資訊
+ *
+ * @param onDismissRequest 當使用者請求關閉對話框時呼叫
+ * @param manga 要編輯的漫畫物件
+ * @param onConfirm 當使用者點擊確認按鈕時呼叫，回傳更新後的資訊
+ */
+@Composable
+fun EditMangaInfoDialog(
+    onDismissRequest: () -> Unit,
+    manga: Manga,
+    onConfirm: (title: String, author: String, artist: String, description: String) -> Unit,
+) {
+    // 為每個輸入欄位建立可記住的狀態
+    // 使用 rememberSaveable 以在畫面旋轉等配置變更後保留使用者輸入
+    // 初始值優先使用自定義資訊，如果不存在則使用原始資訊
+    var title by rememberSaveable(manga) { mutableStateOf(manga.customTitle ?: manga.title) }
+    var author by rememberSaveable(manga) { mutableStateOf(manga.customAuthor ?: manga.author ?: "") }
+    var artist by rememberSaveable(manga) { mutableStateOf(manga.customArtist ?: manga.artist ?: "") }
+    var description by rememberSaveable(manga) { mutableStateOf(manga.customDescription ?: manga.description ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(text = stringResource(MR.strings.action_edit_info)) },
+        text = {
+            // 使用可滾動的 Column，以防描述過長而無法顯示
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            ) {
+                // 標題輸入框
+                TextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(text = stringResource(MR.strings.title)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
+
+                // 作者輸入框
+                TextField(
+                    value = author,
+                    onValueChange = { author = it },
+                    label = { Text(text = stringResource(MR.strings.author)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
+
+                // 繪者輸入框
+                TextField(
+                    value = artist,
+                    onValueChange = { artist = it },
+                    label = { Text(text = stringResource(MR.strings.artist)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
+
+                // 描述輸入框
+                TextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text(text = stringResource(MR.strings.description)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(title.trim(), author.trim(), artist.trim(), description.trim())
+                    onDismissRequest()
+                },
+            ) {
+                Text(text = stringResource(MR.strings.action_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(MR.strings.action_cancel))
             }
         },
     )
