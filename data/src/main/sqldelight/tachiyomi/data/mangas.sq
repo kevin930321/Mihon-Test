@@ -164,62 +164,57 @@ INSERT INTO mangas(source, url, artist, author, description, genre, title, statu
 VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version);
 
 update: (
-    source INTEGER,
     url TEXT,
+    source INTEGER,
+    favorite INTEGER,
+    last_update INTEGER,
+    next_update INTEGER,
+    date_added INTEGER,
+    viewer_flags INTEGER,
+    chapter_flags INTEGER,
+    cover_last_modified INTEGER,
+    title TEXT,
     artist TEXT,
     author TEXT,
     description TEXT,
     genre TEXT,
-    title TEXT,
     status INTEGER,
-    thumbnailUrl TEXT,
-    favorite INTEGER,
-    lastUpdate INTEGER,
-    nextUpdate INTEGER,
+    thumbnail_url TEXT,
+    update_strategy INTEGER,
     initialized INTEGER,
-    viewer INTEGER,
-    chapterFlags INTEGER,
-    coverLastModified INTEGER,
-    dateAdded INTEGER,
-    updateStrategy INTEGER,
-    calculateInterval INTEGER,
-    version INTEGER,
-    isSyncing INTEGER,
-    mangaId INTEGER!,
-    -- 新增自定義欄位的參數
+    -- 這裡是我們新增的自定義欄位參數
     customTitle TEXT,
     customAuthor TEXT,
     customArtist TEXT,
-    customDescription TEXT
+    customDescription TEXT,
+    -- id 參數必須放在最後
+    id INTEGER!
 )
 UPDATE mangas SET
-    source = coalesce(:source, source),
-    url = coalesce(:url, url),
-    artist = coalesce(:artist, artist),
-    author = coalesce(:author, author),
-    description = coalesce(:description, description),
-    genre = coalesce(:genre, genre),
-    title = coalesce(:title, title),
-    status = coalesce(:status, status),
-    thumbnail_url = coalesce(:thumbnailUrl, thumbnail_url),
-    favorite = coalesce(:favorite, favorite),
-    last_update = coalesce(:lastUpdate, last_update),
-    next_update = coalesce(:nextUpdate, next_update),
-    initialized = coalesce(:initialized, initialized),
-    viewer = coalesce(:viewer, viewer),
-    chapter_flags = coalesce(:chapterFlags, chapter_flags),
-    cover_last_modified = coalesce(:coverLastModified, cover_last_modified),
-    date_added = coalesce(:dateAdded, date_added),
-    update_strategy = coalesce(:updateStrategy, update_strategy),
-    calculate_interval = coalesce(:calculateInterval, calculate_interval),
-    version = coalesce(:version, version),
-    is_syncing = coalesce(:isSyncing, is_syncing),
-    -- 新增自定義欄位的更新邏輯
-    custom_title = coalesce(:customTitle, custom_title),
-    custom_author = coalesce(:customAuthor, custom_author),
-    custom_artist = coalesce(:customArtist, custom_artist),
-    custom_description = coalesce(:customDescription, custom_description)
-WHERE _id = :mangaId;
+    url = :url,
+    source = :source,
+    favorite = :favorite,
+    last_update = :last_update,
+    next_update = :next_update,
+    date_added = :date_added,
+    viewer_flags = :viewer_flags,
+    chapter_flags = :chapter_flags,
+    cover_last_modified = :cover_last_modified,
+    title = :title,
+    artist = :artist,
+    author = :author,
+    description = :description,
+    genre = :genre,
+    status = :status,
+    thumbnail_url = :thumbnail_url,
+    update_strategy = :update_strategy,
+    initialized = :initialized,
+    -- 這裡是我們新增的自定義欄位賦值
+    custom_title = :customTitle,
+    custom_author = :customAuthor,
+    custom_artist = :customArtist,
+    custom_description = :customDescription
+WHERE _id = :id;
 
 selectLastInsertedRowId:
 SELECT last_insert_rowid();
