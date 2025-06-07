@@ -56,6 +56,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.domain.chapter.interactor.FilterChaptersForDownload
+// 1. 匯入您建立的 SetCustomMangaInfo Use Case
+import mihon.domain.manga.interactor.SetCustomMangaInfo
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.TriState
@@ -120,6 +122,8 @@ class MangaScreenModel(
     private val setMangaCategories: SetMangaCategories = Injekt.get(),
     private val mangaRepository: MangaRepository = Injekt.get(),
     private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get(),
+    // 2. 注入您的 Use Case
+    private val setCustomMangaInfo: SetCustomMangaInfo = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 ) : StateScreenModel<MangaScreenModel.State>(State.Loading) {
 
@@ -469,6 +473,21 @@ class MangaScreenModel(
      */
     private fun moveMangaToCategory(category: Category?) {
         moveMangaToCategories(listOfNotNull(category))
+    }
+
+    // 5. 新增儲存自訂資訊的函式
+    fun saveCustomInfo(title: String, author: String, artist: String, description: String) {
+        val currentManga = successState?.manga ?: return
+        screenModelScope.launchIO {
+            setCustomMangaInfo.await(
+                mangaId = currentManga.id,
+                customTitle = title,
+                customAuthor = author,
+                customArtist = artist,
+                customDescription = description,
+            )
+        }
+        dismissDialog()
     }
 
     // Manga info - end
@@ -1064,6 +1083,7 @@ class MangaScreenModel(
 
     // Track sheet - end
 
+    // 3. 在 Dialog 密封介面中新增一個狀態
     sealed interface Dialog {
         data class ChangeCategory(
             val manga: Manga,
@@ -1073,6 +1093,7 @@ class MangaScreenModel(
         data class DuplicateManga(val manga: Manga, val duplicates: List<MangaWithChapterCount>) : Dialog
         data class Migrate(val target: Manga, val current: Manga) : Dialog
         data class SetFetchInterval(val manga: Manga) : Dialog
+        data class EditInfo(val manga: Manga) : Dialog // 新增的 Dialog 狀態
         data object SettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
@@ -1080,6 +1101,12 @@ class MangaScreenModel(
 
     fun dismissDialog() {
         updateSuccessState { it.copy(dialog = null) }
+    }
+
+    // 4. 新增顯示 Dialog 的函式
+    fun showEditInfoDialog() {
+        val manga = successState?.manga ?: return
+        updateSuccessState { it.copy(dialog = Dialog.EditInfo(manga)) }
     }
 
     fun showDeleteChapterDialog(chapters: List<Chapter>) {
