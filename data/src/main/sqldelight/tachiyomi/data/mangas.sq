@@ -28,7 +28,12 @@ CREATE TABLE mangas(
     favorite_modified_at INTEGER,
     version INTEGER NOT NULL DEFAULT 0,
     is_syncing INTEGER NOT NULL DEFAULT 0,
-    notes TEXT NOT NULL DEFAULT ""
+    notes TEXT NOT NULL DEFAULT "",
+    -- ANNOTATION: Added custom fields for user-defined metadata.
+    customTitle TEXT,
+    customAuthor TEXT,
+    customArtist TEXT,
+    customDescription TEXT
 );
 
 CREATE INDEX library_favorite_index ON mangas(favorite) WHERE favorite = 1;
@@ -51,15 +56,29 @@ BEGIN
   WHERE _id = new._id;
 END;
 
+-- ANNOTATION: Modified trigger to increment version on custom field changes for sync purposes.
 CREATE TRIGGER update_manga_version AFTER UPDATE ON mangas
 BEGIN
     UPDATE mangas SET version = version + 1
     WHERE _id = new._id AND new.is_syncing = 0 AND (
         new.url != old.url OR
         new.description != old.description OR
-        new.favorite != old.favorite
+        new.favorite != old.favorite OR
+        new.customTitle IS NOT old.customTitle OR
+        new.customAuthor IS NOT old.customAuthor OR
+        new.customArtist IS NOT old.customArtist OR
+        new.customDescription IS NOT old.customDescription
     );
 END;
+
+-- ANNOTATION: Added a specific query to update only the custom fields.
+updateCustomMangaInfo:
+UPDATE mangas SET
+    customTitle = :customTitle,
+    customAuthor = :customAuthor,
+    customArtist = :customArtist,
+    customDescription = :customDescription
+WHERE _id = :id;
 
 getMangaById:
 SELECT *
@@ -181,9 +200,10 @@ AND (
     )
 );
 
+-- ANNOTATION: Modified to include custom fields in the insert statement.
 insert:
-INSERT INTO mangas(source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added, update_strategy, calculate_interval, last_modified_at, version, notes)
-VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version, :notes);
+INSERT INTO mangas(source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added, update_strategy, calculate_interval, last_modified_at, version, notes, customTitle, customAuthor, customArtist, customDescription)
+VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version, :notes, :customTitle, :customAuthor, :customArtist, :customDescription);
 
 update:
 UPDATE mangas SET
@@ -216,18 +236,20 @@ SELECT last_insert_rowid();
 
 insertNetworkManga {
     -- Insert the manga if it doesn't exist already
+    -- ANNOTATION: Modified to insert NULL for custom fields initially.
     INSERT INTO mangas(
         source, url, artist, author, description, genre, title, status, thumbnail_url, favorite,
         last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added,
-        update_strategy, calculate_interval, last_modified_at, version
+        update_strategy, calculate_interval, last_modified_at, version, customTitle, customAuthor, customArtist, customDescription
     )
     SELECT
         :source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite,
         :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded,
-        :updateStrategy, :calculateInterval, 0, :version
+        :updateStrategy, :calculateInterval, 0, :version, NULL, NULL, NULL, NULL
     WHERE NOT EXISTS(SELECT 0 FROM mangas WHERE source = :source AND url = :url);
 
     -- Update the relevant details if applicable and not favorite
+    -- This part remains unchanged as it should not overwrite user's custom data.
     UPDATE mangas
     SET
         title = CASE WHEN :updateTitle THEN :title ELSE title END,
@@ -243,7 +265,7 @@ insertNetworkManga {
     AND url = :url
     AND favorite = 0;
 
-    -- Finally return the manga
+    -- Finally return the manga (SELECT * will now include the new custom fields)
     SELECT *
     FROM mangas
     WHERE source = :source
