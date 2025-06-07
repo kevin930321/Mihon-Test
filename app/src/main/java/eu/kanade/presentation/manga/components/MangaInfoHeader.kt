@@ -234,7 +234,7 @@ fun MangaActionRow(
 @Composable
 fun ExpandableMangaDescription(
     defaultExpandState: Boolean,
-    description: String?,
+    manga: Manga,
     tagsProvider: () -> List<String>?,
     notes: String,
     onTagSearch: (String) -> Unit,
@@ -246,6 +246,7 @@ fun ExpandableMangaDescription(
         val (expanded, onExpanded) = rememberSaveable {
             mutableStateOf(defaultExpandState)
         }
+        val description = manga.customDescription.takeIf { !it.isNullOrBlank() } ?: manga.description
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
@@ -353,10 +354,7 @@ private fun MangaAndSourceTitlesLarge(
         )
         Spacer(modifier = Modifier.height(16.dp))
         MangaContentInfo(
-            title = manga.title,
-            author = manga.author,
-            artist = manga.artist,
-            status = manga.status,
+            manga = manga,
             sourceName = sourceName,
             isStubSource = isStubSource,
             doSearch = doSearch,
@@ -396,10 +394,7 @@ private fun MangaAndSourceTitlesSmall(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             MangaContentInfo(
-                title = manga.title,
-                author = manga.author,
-                artist = manga.artist,
-                status = manga.status,
+                manga = manga,
                 sourceName = sourceName,
                 isStubSource = isStubSource,
                 doSearch = doSearch,
@@ -410,16 +405,18 @@ private fun MangaAndSourceTitlesSmall(
 
 @Composable
 private fun ColumnScope.MangaContentInfo(
-    title: String,
-    author: String?,
-    artist: String?,
-    status: Long,
+    manga: Manga,
     sourceName: String,
     isStubSource: Boolean,
     doSearch: (query: String, global: Boolean) -> Unit,
     textAlign: TextAlign? = LocalTextStyle.current.textAlign,
 ) {
     val context = LocalContext.current
+
+    val title = manga.customTitle.takeIf { !it.isNullOrBlank() } ?: manga.title
+    val author = manga.customAuthor.takeIf { !it.isNullOrBlank() } ?: manga.author
+    val artist = manga.customArtist.takeIf { !it.isNullOrBlank() } ?: manga.artist
+
     Text(
         text = title.ifBlank { stringResource(MR.strings.unknown_title) },
         style = MaterialTheme.typography.titleLarge,
@@ -500,7 +497,7 @@ private fun ColumnScope.MangaContentInfo(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = when (status) {
+            imageVector = when (manga.status) {
                 SManga.ONGOING.toLong() -> Icons.Outlined.Schedule
                 SManga.COMPLETED.toLong() -> Icons.Outlined.DoneAll
                 SManga.LICENSED.toLong() -> Icons.Outlined.AttachMoney
@@ -516,7 +513,7 @@ private fun ColumnScope.MangaContentInfo(
         )
         ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
             Text(
-                text = when (status) {
+                text = when (manga.status) {
                     SManga.ONGOING.toLong() -> stringResource(MR.strings.ongoing)
                     SManga.COMPLETED.toLong() -> stringResource(MR.strings.completed)
                     SManga.LICENSED.toLong() -> stringResource(MR.strings.licensed)
