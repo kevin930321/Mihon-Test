@@ -179,6 +179,13 @@ class MangaRepositoryImpl(
                     version = value.version,
                     isSyncing = 0,
                     notes = value.notes,
+                    
+                    // [修改開始] 將 MangaUpdate 物件中的自定義欄位傳遞給 SQLDelight 查詢
+                    customTitle = value.customTitle,
+                    customAuthor = value.customAuthor,
+                    customArtist = value.customArtist,
+                    customDescription = value.customDescription,
+                    // [修改結束]
                 )
             }
         }
