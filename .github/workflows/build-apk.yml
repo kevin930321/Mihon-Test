@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
   # (可選) 當你 push commit 到 main 或 master 分支時自動觸發
-  push:
-    branches:
-      - main
-      - master
+#  push:
+#    branches:
+#      - main
+#      - master
 
 jobs:
   build:
