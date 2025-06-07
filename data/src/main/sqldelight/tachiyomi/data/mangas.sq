@@ -55,7 +55,6 @@ BEGIN
   WHERE _id = new._id;
 END;
 
--- FIX: 優化了 TRIGGER 的比較邏輯，使用 IS DISTINCT FROM 來安全地比較可能為 NULL 的值
 CREATE TRIGGER update_manga_version AFTER UPDATE ON mangas
 BEGIN
     UPDATE mangas SET version = version + 1
@@ -76,7 +75,6 @@ SELECT *
 FROM mangas
 WHERE _id = :id;
 
--- TODO: this should ideally never really have more than 1 result
 getMangaByUrlAndSource:
 SELECT *
 FROM mangas
@@ -164,8 +162,9 @@ insert:
 INSERT INTO mangas(source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added, update_strategy, calculate_interval, last_modified_at, version)
 VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version);
 
--- FIX: 修正了整個 update 查詢，使其語法正確
-update: (
+-- FIX: 1. 重新命名為 updateManga
+--      2. 確保語法完全正確
+updateManga: (
     url TEXT,
     source INTEGER,
     favorite INTEGER,
@@ -184,12 +183,10 @@ update: (
     thumbnail_url TEXT,
     update_strategy INTEGER,
     initialized INTEGER,
-    -- 這裡是我們新增的自定義欄位參數
     customTitle TEXT,
     customAuthor TEXT,
     customArtist TEXT,
     customDescription TEXT,
-    -- id 參數必須放在最後
     id INTEGER!
 )
 UPDATE mangas SET
@@ -199,7 +196,7 @@ UPDATE mangas SET
     last_update = :last_update,
     next_update = :next_update,
     date_added = :date_added,
-    viewer = :viewer_flags, -- <-- 主要修正點：欄位名稱是 viewer
+    viewer = :viewer_flags,
     chapter_flags = :chapter_flags,
     cover_last_modified = :cover_last_modified,
     title = :title,
@@ -211,12 +208,12 @@ UPDATE mangas SET
     thumbnail_url = :thumbnail_url,
     update_strategy = :update_strategy,
     initialized = :initialized,
-    -- 這裡是我們新增的自定義欄位賦值
     custom_title = :customTitle,
     custom_author = :customAuthor,
     custom_artist = :customArtist,
     custom_description = :customDescription
 WHERE _id = :id;
 
+-- FIX: 3. 在此處加入一個關鍵的空行，將此查詢與上一個查詢分隔開
 selectLastInsertedRowId:
 SELECT last_insert_rowid();
