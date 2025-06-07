@@ -33,6 +33,11 @@ object MangaMapper {
         @Suppress("UNUSED_PARAMETER")
         isSyncing: Long,
         notes: String,
+        // --- 新增的自定義欄位 ---
+        customTitle: String?,
+        customAuthor: String?,
+        customArtist: String?,
+        customDescription: String?,
     ): Manga = Manga(
         id = id,
         source = source,
@@ -58,6 +63,11 @@ object MangaMapper {
         favoriteModifiedAt = favoriteModifiedAt,
         version = version,
         notes = notes,
+        // --- 對應到 Manga 物件 ---
+        customTitle = customTitle,
+        customAuthor = customAuthor,
+        customArtist = customArtist,
+        customDescription = customDescription,
     )
 
     fun mapLibraryManga(
@@ -86,6 +96,12 @@ object MangaMapper {
         version: Long,
         isSyncing: Long,
         notes: String,
+        // --- 新增的自定義欄位 ---
+        customTitle: String?,
+        customAuthor: String?,
+        customArtist: String?,
+        customDescription: String?,
+        // --- Library 相關欄位 ---
         totalCount: Long,
         readCount: Double,
         latestUpload: Long,
@@ -120,6 +136,11 @@ object MangaMapper {
             version,
             isSyncing,
             notes,
+            // --- 將新欄位傳遞下去 ---
+            customTitle,
+            customAuthor,
+            customArtist,
+            customDescription,
         ),
         category = category,
         totalChapters = totalCount,
@@ -156,6 +177,12 @@ object MangaMapper {
         version: Long,
         isSyncing: Long,
         notes: String,
+        // --- 新增的自定義欄位 ---
+        customTitle: String?,
+        customAuthor: String?,
+        customArtist: String?,
+        customDescription: String?,
+        // --- ChapterCount 相關欄位 ---
         totalCount: Long,
     ): MangaWithChapterCount = MangaWithChapterCount(
         manga = mapManga(
@@ -184,6 +211,11 @@ object MangaMapper {
             version,
             isSyncing,
             notes,
+            // --- 將新欄位傳遞下去 ---
+            customTitle,
+            customAuthor,
+            customArtist,
+            customDescription,
         ),
         chapterCount = totalCount,
     )
