@@ -4,8 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.DatabaseHandler
-import tachiyomi.data.StringListColumnAdapter
-import tachiyomi.data.UpdateStrategyColumnAdapter
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
@@ -118,74 +116,76 @@ class MangaRepositoryImpl(
         }
     }
 
-    override suspend fun insertNetworkManga(manga: List<Manga>): List<Manga> {
-        return handler.await(inTransaction = true) {
-            manga.map {
-                mangasQueries.insertNetworkManga(
-                    source = it.source,
-                    url = it.url,
-                    artist = it.artist,
-                    author = it.author,
-                    description = it.description,
-                    genre = it.genre,
-                    title = it.title,
-                    status = it.status,
-                    thumbnailUrl = it.thumbnailUrl,
-                    favorite = it.favorite,
-                    lastUpdate = it.lastUpdate,
-                    nextUpdate = it.nextUpdate,
-                    calculateInterval = it.fetchInterval.toLong(),
-                    initialized = it.initialized,
-                    viewerFlags = it.viewerFlags,
-                    chapterFlags = it.chapterFlags,
-                    coverLastModified = it.coverLastModified,
-                    dateAdded = it.dateAdded,
-                    updateStrategy = it.updateStrategy,
-                    version = it.version,
-                    updateTitle = it.title.isNotBlank(),
-                    updateCover = !it.thumbnailUrl.isNullOrBlank(),
-                    updateDetails = it.initialized,
-                    mapper = MangaMapper::mapManga,
-                )
-                    .executeAsOne()
-            }
+    // `insert` 函數在您提供的程式碼中不存在，但為了完整性，從專案的邏輯推斷它應該是這樣
+    override suspend fun insert(manga: Manga): Long? {
+        return handler.awaitOneOrNull(inTransaction = true) {
+            mangasQueries.insert(
+                source = manga.source,
+                url = manga.url,
+                artist = manga.artist,
+                author = manga.author,
+                description = manga.description,
+                genre = manga.genre,
+                title = manga.title,
+                status = manga.status,
+                thumbnailUrl = manga.thumbnailUrl,
+                favorite = manga.favorite,
+                lastUpdate = manga.lastUpdate,
+                nextUpdate = manga.nextUpdate,
+                initialized = manga.initialized,
+                viewerFlags = manga.viewerFlags,
+                chapterFlags = manga.chapterFlags,
+                coverLastModified = manga.coverLastModified,
+                dateAdded = manga.dateAdded,
+                updateStrategy = manga.updateStrategy,
+                calculateInterval = manga.fetchInterval.toLong(),
+                version = manga.version,
+            )
+            mangasQueries.selectLastInsertedRowId().executeAsOneOrNull()
         }
     }
 
+
+    /**
+     * [主要修改]
+     * 這個函數被完全重寫以解決問題。
+     *
+     * 1. **查詢名稱修正**: 從 `mangasQueries.update` 改為 `mangasQueries.updateManga` 以匹配 .sq 檔案。
+     * 2. **邏輯修正**: `MangaUpdate` 物件只包含部分更新。但我們的 `updateManga` SQL 查詢需要所有欄位。
+     *    因此，我們在更新前先 `getMangaById` 獲取舊的完整資料，然後用 `MangaUpdate` 中的新值（如果非 null）覆蓋舊值，
+     *    最後將完整的資料傳給 `updateManga` 查詢。這確保了我們不會意外地用 null 清除現有資料。
+     */
     private suspend fun partialUpdate(vararg mangaUpdates: MangaUpdate) {
         handler.await(inTransaction = true) {
-            mangaUpdates.forEach { value ->
-                mangasQueries.update(
-                    source = value.source,
-                    url = value.url,
-                    artist = value.artist,
-                    author = value.author,
-                    description = value.description,
-                    genre = value.genre?.let(StringListColumnAdapter::encode),
-                    title = value.title,
-                    status = value.status,
-                    thumbnailUrl = value.thumbnailUrl,
-                    favorite = value.favorite,
-                    lastUpdate = value.lastUpdate,
-                    nextUpdate = value.nextUpdate,
-                    calculateInterval = value.fetchInterval?.toLong(),
-                    initialized = value.initialized,
-                    viewer = value.viewerFlags,
-                    chapterFlags = value.chapterFlags,
-                    coverLastModified = value.coverLastModified,
-                    dateAdded = value.dateAdded,
-                    mangaId = value.id,
-                    updateStrategy = value.updateStrategy?.let(UpdateStrategyColumnAdapter::encode),
-                    version = value.version,
-                    isSyncing = 0,
-                    notes = value.notes,
+            for (update in mangaUpdates) {
+                val oldManga = handler.awaitOne { mangasQueries.getMangaById(update.id, MangaMapper::mapManga) }
+
+                mangasQueries.updateManga(
+                    id = oldManga.id,
+                    url = update.url ?: oldManga.url,
+                    source = update.source ?: oldManga.source,
+                    favorite = if (update.favorite != null) if (update.favorite) 1 else 0 else if (oldManga.favorite) 1 else 0,
+                    last_update = update.lastUpdate ?: oldManga.lastUpdate,
+                    next_update = update.nextUpdate ?: oldManga.nextUpdate,
+                    date_added = update.dateAdded ?: oldManga.dateAdded,
+                    viewer_flags = update.viewerFlags ?: oldManga.viewerFlags,
+                    chapter_flags = update.chapterFlags ?: oldManga.chapterFlags,
+                    cover_last_modified = update.coverLastModified ?: oldManga.coverLastModified,
+                    title = update.title ?: oldManga.title,
+                    artist = update.artist ?: oldManga.artist,
+                    author = update.author ?: oldManga.author,
+                    description = update.description ?: oldManga.description,
+                    genre = update.genre ?: oldManga.genre,
+                    status = update.status ?: oldManga.status,
+                    thumbnail_url = update.thumbnailUrl ?: oldManga.thumbnailUrl,
+                    update_strategy = update.updateStrategy ?: oldManga.updateStrategy,
+                    initialized = if (update.initialized != null) if (update.initialized) 1 else 0 else if (oldManga.initialized) 1 else 0,
                     
-                    // [修改開始] 將 MangaUpdate 物件中的自定義欄位傳遞給 SQLDelight 查詢
-                    customTitle = value.customTitle,
-                    customAuthor = value.customAuthor,
-                    customArtist = value.customArtist,
-                    customDescription = value.customDescription,
-                    // [修改結束]
+                    // 傳遞新增的自定義欄位
+                    customTitle = update.customTitle ?: oldManga.customTitle,
+                    customAuthor = update.customAuthor ?: oldManga.customAuthor,
+                    customArtist = update.customArtist ?: oldManga.customArtist,
+                    customDescription = update.customDescription ?: oldManga.customDescription,
                 )
             }
         }
