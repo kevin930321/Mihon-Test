@@ -62,7 +62,6 @@ BEGIN
         new.url IS DISTINCT FROM old.url OR
         new.description IS DISTINCT FROM old.description OR
         new.favorite IS DISTINCT FROM old.favorite OR
-        -- 當自定義欄位變更時，也更新版本號
         new.custom_title IS DISTINCT FROM old.custom_title OR
         new.custom_author IS DISTINCT FROM old.custom_author OR
         new.custom_artist IS DISTINCT FROM old.custom_artist OR
@@ -162,33 +161,8 @@ insert:
 INSERT INTO mangas(source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added, update_strategy, calculate_interval, last_modified_at, version)
 VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version);
 
--- FIX: 1. 重新命名為 updateManga
---      2. 確保語法完全正確
-updateManga: (
-    url TEXT,
-    source INTEGER,
-    favorite INTEGER,
-    last_update INTEGER,
-    next_update INTEGER,
-    date_added INTEGER,
-    viewer_flags INTEGER,
-    chapter_flags INTEGER,
-    cover_last_modified INTEGER,
-    title TEXT,
-    artist TEXT,
-    author TEXT,
-    description TEXT,
-    genre TEXT,
-    status INTEGER,
-    thumbnail_url TEXT,
-    update_strategy INTEGER,
-    initialized INTEGER,
-    customTitle TEXT,
-    customAuthor TEXT,
-    customArtist TEXT,
-    customDescription TEXT,
-    id INTEGER!
-)
+-- [最終修正] 移除了無效的 (...) 參數塊，只保留標籤和 SQL 語句
+updateManga:
 UPDATE mangas SET
     url = :url,
     source = :source,
@@ -214,6 +188,5 @@ UPDATE mangas SET
     custom_description = :customDescription
 WHERE _id = :id;
 
--- FIX: 3. 在此處加入一個關鍵的空行，將此查詢與上一個查詢分隔開
 selectLastInsertedRowId:
 SELECT last_insert_rowid();
