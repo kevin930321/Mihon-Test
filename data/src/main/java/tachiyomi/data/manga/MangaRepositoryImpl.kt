@@ -132,7 +132,7 @@ class MangaRepositoryImpl(
                 version = manga.version,
             )
             mangasQueries.selectLastInsertedRowId()
-        }
+        }?.executeAsOneOrNull()
     }
 
     private suspend fun partialUpdate(vararg mangaUpdates: MangaUpdate) {
