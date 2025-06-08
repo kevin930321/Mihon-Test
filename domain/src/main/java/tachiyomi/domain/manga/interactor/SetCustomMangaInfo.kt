@@ -1,5 +1,6 @@
 package tachiyomi.domain.manga.interactor
 
+import eu.kanade.domain.manga.interactor.UpdateManga
 import tachiyomi.domain.manga.model.MangaUpdate
 
 class SetCustomMangaInfo(
