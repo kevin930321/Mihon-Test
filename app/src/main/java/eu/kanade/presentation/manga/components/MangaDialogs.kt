@@ -156,22 +156,12 @@ fun SetIntervalDialog(
     )
 }
 
-/**
- * 新增的對話框，用於編輯漫畫資訊
- *
- * @param onDismissRequest 當使用者請求關閉對話框時呼叫
- * @param manga 要編輯的漫畫物件
- * @param onConfirm 當使用者點擊確認按鈕時呼叫，回傳更新後的資訊
- */
 @Composable
 fun EditMangaInfoDialog(
     onDismissRequest: () -> Unit,
     manga: Manga,
     onConfirm: (title: String, author: String, artist: String, description: String) -> Unit,
 ) {
-    // 為每個輸入欄位建立可記住的狀態
-    // 使用 rememberSaveable 以在畫面旋轉等配置變更後保留使用者輸入
-    // 初始值優先使用自定義資訊，如果不存在則使用原始資訊
     var title by rememberSaveable(manga) { mutableStateOf(manga.customTitle ?: manga.title) }
     var author by rememberSaveable(manga) { mutableStateOf(manga.customAuthor ?: manga.author ?: "") }
     var artist by rememberSaveable(manga) { mutableStateOf(manga.customArtist ?: manga.artist ?: "") }
@@ -181,11 +171,9 @@ fun EditMangaInfoDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(text = stringResource(MR.strings.action_edit_info)) },
         text = {
-            // 使用可滾動的 Column，以防描述過長而無法顯示
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
             ) {
-                // 標題輸入框
                 TextField(
                     value = title,
                     onValueChange = { title = it },
@@ -194,7 +182,6 @@ fun EditMangaInfoDialog(
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
 
-                // 作者輸入框
                 TextField(
                     value = author,
                     onValueChange = { author = it },
@@ -203,7 +190,6 @@ fun EditMangaInfoDialog(
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
 
-                // 繪者輸入框
                 TextField(
                     value = artist,
                     onValueChange = { artist = it },
@@ -212,7 +198,6 @@ fun EditMangaInfoDialog(
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
 
-                // 描述輸入框
                 TextField(
                     value = description,
                     onValueChange = { description = it },
