@@ -1,5 +1,6 @@
 package tachiyomi.domain.manga.repository
 
+// [修正] 新增了所有必要的 import 語句
 import kotlinx.coroutines.flow.Flow
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
@@ -37,12 +38,9 @@ interface MangaRepository {
     suspend fun update(update: MangaUpdate): Boolean
 
     suspend fun updateAll(mangaUpdates: List<MangaUpdate>): Boolean
-    
-    // [修正] 新增了這個 insert 函數的定義。
-    // `MangaRepositoryImpl.kt` 實作了這個函數，所以介面中也必須要有它的定義。
+
+    // [修正] 確保介面與實作同步，補上這兩個函數定義
     suspend fun insert(manga: Manga): Long?
 
-    // 您的 `insertNetworkManga` 函數定義也保留在這裡，因為您的原始實作中包含了它。
-    // 注意：您需要確保在 `MangaRepositoryImpl.kt` 中也正確地實作了這個函數。
     suspend fun insertNetworkManga(manga: List<Manga>): List<Manga>
 }
