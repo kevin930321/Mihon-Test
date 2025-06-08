@@ -79,7 +79,7 @@ import tachiyomi.domain.manga.interactor.GetMangaByUrlAndSourceId
 import tachiyomi.domain.manga.interactor.GetMangaWithChapters
 import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.interactor.ResetViewerFlags
-import tachiyomi.domain.manga.interactor.SetCustomMangaInfo // <-- 1. 新增 Import
+import tachiyomi.domain.manga.interactor.SetCustomMangaInfo
 import tachiyomi.domain.manga.interactor.SetMangaChapterFlags
 import tachiyomi.domain.manga.interactor.UpdateMangaNotes
 import tachiyomi.domain.manga.repository.MangaRepository
@@ -136,7 +136,7 @@ class DomainModule : InjektModule {
         addFactory { SetMangaCategories(get()) }
         addFactory { GetExcludedScanlators(get()) }
         addFactory { SetExcludedScanlators(get()) }
-        addFactory { SetCustomMangaInfo(get()) } // <-- 2. 新增工廠方法
+        addFactory { SetCustomMangaInfo(get()) }
         addFactory {
             MigrateMangaUseCase(
                 get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
