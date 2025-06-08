@@ -33,7 +33,6 @@ object MangaMapper {
         @Suppress("UNUSED_PARAMETER")
         isSyncing: Long,
         notes: String,
-        // --- 新增的自定義欄位 ---
         customTitle: String?,
         customAuthor: String?,
         customArtist: String?,
@@ -63,7 +62,6 @@ object MangaMapper {
         favoriteModifiedAt = favoriteModifiedAt,
         version = version,
         notes = notes,
-        // --- 對應到 Manga 物件 ---
         customTitle = customTitle,
         customAuthor = customAuthor,
         customArtist = customArtist,
@@ -96,12 +94,10 @@ object MangaMapper {
         version: Long,
         isSyncing: Long,
         notes: String,
-        // --- 新增的自定義欄位 ---
         customTitle: String?,
         customAuthor: String?,
         customArtist: String?,
         customDescription: String?,
-        // --- Library 相關欄位 ---
         totalCount: Long,
         readCount: Double,
         latestUpload: Long,
@@ -136,7 +132,6 @@ object MangaMapper {
             version,
             isSyncing,
             notes,
-            // --- 將新欄位傳遞下去 ---
             customTitle,
             customAuthor,
             customArtist,
@@ -177,12 +172,10 @@ object MangaMapper {
         version: Long,
         isSyncing: Long,
         notes: String,
-        // --- 新增的自定義欄位 ---
         customTitle: String?,
         customAuthor: String?,
         customArtist: String?,
         customDescription: String?,
-        // --- ChapterCount 相關欄位 ---
         totalCount: Long,
     ): MangaWithChapterCount = MangaWithChapterCount(
         manga = mapManga(
@@ -211,7 +204,6 @@ object MangaMapper {
             version,
             isSyncing,
             notes,
-            // --- 將新欄位傳遞下去 ---
             customTitle,
             customAuthor,
             customArtist,
