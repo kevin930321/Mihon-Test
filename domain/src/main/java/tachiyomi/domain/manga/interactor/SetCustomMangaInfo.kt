@@ -1,6 +1,5 @@
 package tachiyomi.domain.manga.interactor
 
-// [修正] 新增了 UpdateManga 和 MangaUpdate 這兩個關鍵的 import 語句
 import tachiyomi.domain.manga.model.MangaUpdate
 
 class SetCustomMangaInfo(
