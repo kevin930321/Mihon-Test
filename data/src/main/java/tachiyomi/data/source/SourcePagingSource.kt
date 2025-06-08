@@ -5,7 +5,6 @@ import androidx.paging.PagingState
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.source.model.SManga
 import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.toDomainManga
@@ -44,12 +43,11 @@ abstract class SourcePagingSource : PagingSource<Long, Manga>() {
             throw e
         }
 
-        return result.let { mangasPage ->
-            val manga = mangasPage.mangas.map { it.toDomainManga(source.id) }
-                .map { networkToLocalManga.await(it) }
+        val mangaList = result.mangas
+            .map { it.toDomainManga(source.id) }
+            .map { networkToLocalManga.await(it) }
 
-            toLoadResult(mangasPage, manga, page)
-        }
+        return toLoadResult(result, mangaList, page)
     }
 
     private fun toLoadResult(
@@ -63,6 +61,4 @@ abstract class SourcePagingSource : PagingSource<Long, Manga>() {
             nextKey = if (mangasPage.hasNextPage) page + 1 else null,
         )
     }
-
-    protected fun SManga.toDomainManga(sourceId: Long): Manga = toDomainManga(sourceId, networkToLocalManga)
 }
