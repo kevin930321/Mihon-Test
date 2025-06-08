@@ -1,7 +1,6 @@
 package tachiyomi.domain.manga.interactor
 
-// [修正] 新增了這兩個關鍵的 import 語句。
-// 這會告訴編譯器去哪裡尋找 MangaUpdate 和 UpdateManga 的定義，解決 "Unresolved reference" 錯誤。
+// [最終修正] 新增了 UpdateManga 和 MangaUpdate 這兩個關鍵的 import 語句。
 import tachiyomi.domain.manga.model.MangaUpdate
 
 class SetCustomMangaInfo(
