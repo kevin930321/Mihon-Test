@@ -7,7 +7,6 @@ import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
-import tachiyomi.domain.manga.model.MangaWithChapterCount
 import tachiyomi.domain.manga.repository.MangaRepository
 import java.time.LocalDate
 import java.time.ZoneId
@@ -26,21 +25,13 @@ class MangaRepositoryImpl(
 
     override suspend fun getMangaByUrlAndSourceId(url: String, sourceId: Long): Manga? {
         return handler.awaitOneOrNull {
-            mangasQueries.getMangaByUrlAndSource(
-                url,
-                sourceId,
-                MangaMapper::mapManga,
-            )
+            mangasQueries.getMangaByUrlAndSource(url, sourceId, MangaMapper::mapManga)
         }
     }
 
     override fun getMangaByUrlAndSourceIdAsFlow(url: String, sourceId: Long): Flow<Manga?> {
         return handler.subscribeToOneOrNull {
-            mangasQueries.getMangaByUrlAndSource(
-                url,
-                sourceId,
-                MangaMapper::mapManga,
-            )
+            mangasQueries.getMangaByUrlAndSource(url, sourceId, MangaMapper::mapManga)
         }
     }
 
@@ -64,14 +55,9 @@ class MangaRepositoryImpl(
         return handler.subscribeToList { mangasQueries.getFavoriteBySourceId(sourceId, MangaMapper::mapManga) }
     }
 
-    override suspend fun getDuplicateLibraryManga(id: Long, title: String): List<MangaWithChapterCount> {
+    override suspend fun getDuplicateLibraryManga(id: Long, title: String): List<Manga> {
         return handler.awaitList {
-            mangasQueries.getDuplicateLibraryManga(id, title) { _id, source, url, artist, author, description, genre, mangaTitle, status, thumbnailUrl, favorite, lastUpdate, nextUpdate, initialized, viewerFlags, chapterFlags, coverLastModified, dateAdded, updateStrategy, calculateInterval, lastModifiedAt, favoriteModifiedAt, version, isSyncing, notes, _, _, _, _, chapterCount ->
-                MangaWithChapterCount(
-                    manga = MangaMapper.mapManga(_id, source, url, artist, author, description, genre, mangaTitle, status, thumbnailUrl, favorite, lastUpdate, nextUpdate, initialized, viewerFlags, chapterFlags, coverLastModified, dateAdded, updateStrategy, calculateInterval, lastModifiedAt, favoriteModifiedAt, version, isSyncing, notes, null, null, null, null),
-                    chapterCount = chapterCount,
-                )
-            }
+            mangasQueries.getDuplicateLibraryManga(id = id, title = title, mapper = MangaMapper::mapManga)
         }
     }
 
@@ -95,7 +81,7 @@ class MangaRepositoryImpl(
     override suspend fun setMangaCategories(mangaId: Long, categoryIds: List<Long>) {
         handler.await(inTransaction = true) {
             mangas_categoriesQueries.deleteMangaCategoryByMangaId(mangaId)
-            categoryIds.map { categoryId ->
+            categoryIds.forEach { categoryId ->
                 mangas_categoriesQueries.insert(mangaId, categoryId)
             }
         }
@@ -145,7 +131,7 @@ class MangaRepositoryImpl(
                 calculateInterval = manga.fetchInterval.toLong(),
                 version = manga.version,
             )
-            mangasQueries.selectLastInsertedRowId().executeAsOneOrNull()
+            mangasQueries.selectLastInsertedRowId()
         }
     }
 
