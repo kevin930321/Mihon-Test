@@ -108,7 +108,6 @@ fun MangaInfoBox(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
-        // Backdrop
         val backdropGradientColors = listOf(
             Color.Transparent,
             MaterialTheme.colorScheme.background,
@@ -132,7 +131,6 @@ fun MangaInfoBox(
                 .alpha(0.2f),
         )
 
-        // Manga & source info
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
             if (!isTabletUi) {
                 MangaAndSourceTitlesSmall(
@@ -173,7 +171,6 @@ fun MangaActionRow(
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
 
-    // TODO: show something better when using custom interval
     val nextUpdateDays = remember(nextUpdate) {
         return@remember if (nextUpdate != null) {
             val now = Instant.now()
@@ -582,8 +579,6 @@ private fun MangaSummary(
         contents = listOf(
             {
                 Text(
-                    // Shows at least 3 lines if no notes
-                    // when there are notes show 6
                     text = if (notes.isBlank()) "\n\n" else "\n\n\n\n\n",
                     style = MaterialTheme.typography.bodyMedium,
                 )
