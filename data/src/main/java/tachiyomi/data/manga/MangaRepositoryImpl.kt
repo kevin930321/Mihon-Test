@@ -66,7 +66,12 @@ class MangaRepositoryImpl(
 
     override suspend fun getDuplicateLibraryManga(id: Long, title: String): List<MangaWithChapterCount> {
         return handler.awaitList {
-            mangasQueries.getDuplicateLibraryManga(id, title, MangaMapper::mapMangaWithChapterCount)
+            mangasQueries.getDuplicateLibraryManga(id, title) { _id, source, url, artist, author, description, genre, mangaTitle, status, thumbnailUrl, favorite, lastUpdate, nextUpdate, initialized, viewerFlags, chapterFlags, coverLastModified, dateAdded, updateStrategy, calculateInterval, lastModifiedAt, favoriteModifiedAt, version, isSyncing, notes, _, _, _, _, chapterCount ->
+                MangaWithChapterCount(
+                    manga = MangaMapper.mapManga(_id, source, url, artist, author, description, genre, mangaTitle, status, thumbnailUrl, favorite, lastUpdate, nextUpdate, initialized, viewerFlags, chapterFlags, coverLastModified, dateAdded, updateStrategy, calculateInterval, lastModifiedAt, favoriteModifiedAt, version, isSyncing, notes, null, null, null, null),
+                    chapterCount = chapterCount,
+                )
+            }
         }
     }
 
@@ -153,20 +158,20 @@ class MangaRepositoryImpl(
                     url = update.url ?: oldManga.url,
                     source = update.source ?: oldManga.source,
                     favorite = update.favorite ?: oldManga.favorite,
-                    last_update = update.lastUpdate ?: oldManga.lastUpdate,
-                    next_update = update.nextUpdate ?: oldManga.nextUpdate,
-                    date_added = update.dateAdded ?: oldManga.dateAdded,
-                    viewer_flags = update.viewerFlags ?: oldManga.viewerFlags,
-                    chapter_flags = update.chapterFlags ?: oldManga.chapterFlags,
-                    cover_last_modified = update.coverLastModified ?: oldManga.coverLastModified,
+                    lastUpdate = update.lastUpdate ?: oldManga.lastUpdate,
+                    nextUpdate = update.nextUpdate ?: oldManga.nextUpdate,
+                    dateAdded = update.dateAdded ?: oldManga.dateAdded,
+                    viewerFlags = update.viewerFlags ?: oldManga.viewerFlags,
+                    chapterFlags = update.chapterFlags ?: oldManga.chapterFlags,
+                    coverLastModified = update.coverLastModified ?: oldManga.coverLastModified,
                     title = update.title ?: oldManga.title,
                     artist = update.artist ?: oldManga.artist,
                     author = update.author ?: oldManga.author,
                     description = update.description ?: oldManga.description,
                     genre = update.genre ?: oldManga.genre,
                     status = update.status ?: oldManga.status,
-                    thumbnail_url = update.thumbnailUrl ?: oldManga.thumbnailUrl,
-                    update_strategy = update.updateStrategy ?: oldManga.updateStrategy,
+                    thumbnailUrl = update.thumbnailUrl ?: oldManga.thumbnailUrl,
+                    updateStrategy = update.updateStrategy ?: oldManga.updateStrategy,
                     initialized = update.initialized ?: oldManga.initialized,
                     customTitle = update.customTitle ?: oldManga.customTitle,
                     customAuthor = update.customAuthor ?: oldManga.customAuthor,
