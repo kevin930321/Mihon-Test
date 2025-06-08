@@ -1,6 +1,6 @@
 package tachiyomi.domain.manga.interactor
 
-// [最終修正] 新增了 UpdateManga 和 MangaUpdate 這兩個關鍵的 import 語句。
+// [修正] 新增了 UpdateManga 和 MangaUpdate 這兩個關鍵的 import 語句
 import tachiyomi.domain.manga.model.MangaUpdate
 
 class SetCustomMangaInfo(
@@ -20,7 +20,6 @@ class SetCustomMangaInfo(
             customArtist = customArtist,
             customDescription = customDescription,
         )
-        // 現在因為 import 了 UpdateManga，這裡的 await 就可以被正確解析了
         return updateManga.await(update)
     }
 }
