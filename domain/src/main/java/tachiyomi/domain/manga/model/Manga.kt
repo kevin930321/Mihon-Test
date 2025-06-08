@@ -29,14 +29,10 @@ data class Manga(
     val thumbnailUrl: String?,
     val updateStrategy: UpdateStrategy,
     val initialized: Boolean,
-
-    // [新增] 自定義欄位，用於儲存使用者修改的資訊
     val customTitle: String?,
     val customAuthor: String?,
     val customArtist: String?,
     val customDescription: String?,
-    // [新增結束]
-
     val lastModifiedAt: Long,
     val favoriteModifiedAt: Long?,
     val version: Long,
@@ -132,14 +128,10 @@ data class Manga(
             thumbnailUrl = null,
             updateStrategy = UpdateStrategy.ALWAYS_UPDATE,
             initialized = false,
-
-            // [修改] 為新增的欄位提供預設值
             customTitle = null,
             customAuthor = null,
             customArtist = null,
             customDescription = null,
-            // [修改結束]
-
             lastModifiedAt = 0L,
             favoriteModifiedAt = null,
             version = 0L,
