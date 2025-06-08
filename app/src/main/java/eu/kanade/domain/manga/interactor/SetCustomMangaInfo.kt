@@ -17,7 +17,7 @@ class SetCustomMangaInfo(
             customTitle = customTitle,
             customAuthor = customAuthor,
             customArtist = customArtist,
-            customDescription = description,
+            customDescription = customDescription,
         )
         return updateManga.await(update)
     }
