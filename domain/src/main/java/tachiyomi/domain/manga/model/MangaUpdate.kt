@@ -23,14 +23,10 @@ data class MangaUpdate(
     val thumbnailUrl: String? = null,
     val updateStrategy: UpdateStrategy? = null,
     val initialized: Boolean? = null,
-
-    // --- 新增自定義欄位 ---
     val customTitle: String? = null,
     val customAuthor: String? = null,
     val customArtist: String? = null,
     val customDescription: String? = null,
-    // --- 新增結束 ---
-
     val version: Long? = null,
     val notes: String? = null,
 )
@@ -57,14 +53,10 @@ fun Manga.toMangaUpdate(): MangaUpdate {
         thumbnailUrl = thumbnailUrl,
         updateStrategy = updateStrategy,
         initialized = initialized,
-
-        // --- 新增自定義欄位的對應 ---
         customTitle = customTitle,
         customAuthor = customAuthor,
         customArtist = customArtist,
         customDescription = customDescription,
-        // --- 新增結束 ---
-
         version = version,
         notes = notes,
     )
