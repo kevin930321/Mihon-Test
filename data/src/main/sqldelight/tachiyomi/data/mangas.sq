@@ -28,7 +28,6 @@ CREATE TABLE mangas(
     favorite_modified_at INTEGER,
     version INTEGER NOT NULL DEFAULT 0,
     is_syncing INTEGER NOT NULL DEFAULT 0,
-    -- 新增自定義資訊欄位
     custom_title TEXT,
     custom_author TEXT,
     custom_artist TEXT,
@@ -161,8 +160,31 @@ insert:
 INSERT INTO mangas(source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, chapter_flags, cover_last_modified, date_added, update_strategy, calculate_interval, last_modified_at, version)
 VALUES (:source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite, :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :chapterFlags, :coverLastModified, :dateAdded, :updateStrategy, :calculateInterval, 0, :version);
 
--- [最終修正] 移除了無效的 (...) 參數塊，只保留標籤和 SQL 語句
-updateManga:
+updateManga: (
+    url: String,
+    source: Long,
+    favorite: Boolean,
+    last_update: Long?,
+    next_update: Long?,
+    date_added: Long,
+    viewer_flags: Long,
+    chapter_flags: Long,
+    cover_last_modified: Long,
+    title: String,
+    artist: String?,
+    author: String?,
+    description: String?,
+    genre: List<String>?,
+    status: Long,
+    thumbnail_url: String?,
+    update_strategy: UpdateStrategy,
+    initialized: Boolean,
+    customTitle: String?,
+    customAuthor: String?,
+    customArtist: String?,
+    customDescription: String?,
+    id: Long
+)
 UPDATE mangas SET
     url = :url,
     source = :source,
