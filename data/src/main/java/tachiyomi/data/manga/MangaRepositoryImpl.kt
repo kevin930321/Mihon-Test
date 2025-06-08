@@ -116,7 +116,6 @@ class MangaRepositoryImpl(
         }
     }
 
-    // `insert` 函數在您提供的程式碼中不存在，但為了完整性，從專案的邏輯推斷它應該是這樣
     override suspend fun insert(manga: Manga): Long? {
         return handler.awaitOneOrNull(inTransaction = true) {
             mangasQueries.insert(
@@ -145,26 +144,15 @@ class MangaRepositoryImpl(
         }
     }
 
-
-    /**
-     * [主要修改]
-     * 這個函數被完全重寫以解決問題。
-     *
-     * 1. **查詢名稱修正**: 從 `mangasQueries.update` 改為 `mangasQueries.updateManga` 以匹配 .sq 檔案。
-     * 2. **邏輯修正**: `MangaUpdate` 物件只包含部分更新。但我們的 `updateManga` SQL 查詢需要所有欄位。
-     *    因此，我們在更新前先 `getMangaById` 獲取舊的完整資料，然後用 `MangaUpdate` 中的新值（如果非 null）覆蓋舊值，
-     *    最後將完整的資料傳給 `updateManga` 查詢。這確保了我們不會意外地用 null 清除現有資料。
-     */
     private suspend fun partialUpdate(vararg mangaUpdates: MangaUpdate) {
         handler.await(inTransaction = true) {
             for (update in mangaUpdates) {
                 val oldManga = handler.awaitOne { mangasQueries.getMangaById(update.id, MangaMapper::mapManga) }
-
                 mangasQueries.updateManga(
                     id = oldManga.id,
                     url = update.url ?: oldManga.url,
                     source = update.source ?: oldManga.source,
-                    favorite = if (update.favorite != null) if (update.favorite) 1 else 0 else if (oldManga.favorite) 1 else 0,
+                    favorite = update.favorite ?: oldManga.favorite,
                     last_update = update.lastUpdate ?: oldManga.lastUpdate,
                     next_update = update.nextUpdate ?: oldManga.nextUpdate,
                     date_added = update.dateAdded ?: oldManga.dateAdded,
@@ -179,9 +167,7 @@ class MangaRepositoryImpl(
                     status = update.status ?: oldManga.status,
                     thumbnail_url = update.thumbnailUrl ?: oldManga.thumbnailUrl,
                     update_strategy = update.updateStrategy ?: oldManga.updateStrategy,
-                    initialized = if (update.initialized != null) if (update.initialized) 1 else 0 else if (oldManga.initialized) 1 else 0,
-                    
-                    // 傳遞新增的自定義欄位
+                    initialized = update.initialized ?: oldManga.initialized,
                     customTitle = update.customTitle ?: oldManga.customTitle,
                     customAuthor = update.customAuthor ?: oldManga.customAuthor,
                     customArtist = update.customArtist ?: oldManga.customArtist,
