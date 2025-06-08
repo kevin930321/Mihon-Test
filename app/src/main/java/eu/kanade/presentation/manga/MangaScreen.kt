@@ -50,7 +50,6 @@ import androidx.compose.ui.util.fastMap
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.manga.components.ChapterDownloadAction
 import eu.kanade.presentation.manga.components.ChapterHeader
-import eu.kanade.presentation.manga.components.EditMangaInfoDialog
 import eu.kanade.presentation.manga.components.ExpandableMangaDescription
 import eu.kanade.presentation.manga.components.MangaActionRow
 import eu.kanade.presentation.manga.components.MangaBottomActionMenu
@@ -88,11 +87,6 @@ fun MangaScreen(
     isTabletUi: Boolean,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
-
-    // For Dialogs
-    dialog: MangaScreenModel.Dialog?,
-    onDismissDialog: () -> Unit,
-
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
@@ -119,8 +113,6 @@ fun MangaScreen(
     onEditFetchIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
-    onEditInfoClicked: () -> Unit,
-    onEditInfoConfirm: (title: String, author: String, artist: String, description: String) -> Unit,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -150,8 +142,6 @@ fun MangaScreen(
             nextUpdate = nextUpdate,
             chapterSwipeStartAction = chapterSwipeStartAction,
             chapterSwipeEndAction = chapterSwipeEndAction,
-            dialog = dialog,
-            onDismissDialog = onDismissDialog,
             navigateUp = navigateUp,
             onChapterClicked = onChapterClicked,
             onDownloadChapter = onDownloadChapter,
@@ -172,8 +162,6 @@ fun MangaScreen(
             onEditIntervalClicked = onEditFetchIntervalClicked,
             onMigrateClicked = onMigrateClicked,
             onEditNotesClicked = onEditNotesClicked,
-            onEditInfoClicked = onEditInfoClicked,
-            onEditInfoConfirm = onEditInfoConfirm,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
             onMultiMarkAsReadClicked = onMultiMarkAsReadClicked,
             onMarkPreviousAsReadClicked = onMarkPreviousAsReadClicked,
@@ -190,8 +178,6 @@ fun MangaScreen(
             chapterSwipeStartAction = chapterSwipeStartAction,
             chapterSwipeEndAction = chapterSwipeEndAction,
             nextUpdate = nextUpdate,
-            dialog = dialog,
-            onDismissDialog = onDismissDialog,
             navigateUp = navigateUp,
             onChapterClicked = onChapterClicked,
             onDownloadChapter = onDownloadChapter,
@@ -212,8 +198,6 @@ fun MangaScreen(
             onEditIntervalClicked = onEditFetchIntervalClicked,
             onMigrateClicked = onMigrateClicked,
             onEditNotesClicked = onEditNotesClicked,
-            onEditInfoClicked = onEditInfoClicked,
-            onEditInfoConfirm = onEditInfoConfirm,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
             onMultiMarkAsReadClicked = onMultiMarkAsReadClicked,
             onMarkPreviousAsReadClicked = onMarkPreviousAsReadClicked,
@@ -233,8 +217,6 @@ private fun MangaScreenSmallImpl(
     nextUpdate: Instant?,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
-    dialog: MangaScreenModel.Dialog?,
-    onDismissDialog: () -> Unit,
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
@@ -262,8 +244,6 @@ private fun MangaScreenSmallImpl(
     onEditIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
-    onEditInfoClicked: () -> Unit,
-    onEditInfoConfirm: (title: String, author: String, artist: String, description: String) -> Unit,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -286,14 +266,6 @@ private fun MangaScreenSmallImpl(
             first = state.processedChapters,
             second = state.chapterListItems,
             third = state.isAnySelected,
-        )
-    }
-
-    if (dialog is MangaScreenModel.Dialog.EditInfo) {
-        EditMangaInfoDialog(
-            onDismissRequest = onDismissDialog,
-            manga = state.manga,
-            onConfirm = onEditInfoConfirm,
         )
     }
 
@@ -331,7 +303,6 @@ private fun MangaScreenSmallImpl(
                 onClickRefresh = onRefresh,
                 onClickMigrate = onMigrateClicked,
                 onClickEditNotes = onEditNotesClicked,
-                onClickEditInfo = onEditInfoClicked,
                 actionModeCounter = selectedChapterCount,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 onSelectAll = { onAllChapterSelected(true) },
@@ -490,8 +461,6 @@ fun MangaScreenLargeImpl(
     nextUpdate: Instant?,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
-    dialog: MangaScreenModel.Dialog?,
-    onDismissDialog: () -> Unit,
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
@@ -519,8 +488,6 @@ fun MangaScreenLargeImpl(
     onEditIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
-    onEditInfoClicked: () -> Unit,
-    onEditInfoConfirm: (title: String, author: String, artist: String, description: String) -> Unit,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -552,14 +519,6 @@ fun MangaScreenLargeImpl(
 
     val chapterListState = rememberLazyListState()
 
-    if (dialog is MangaScreenModel.Dialog.EditInfo) {
-        EditMangaInfoDialog(
-            onDismissRequest = onDismissDialog,
-            manga = state.manga,
-            onConfirm = onEditInfoConfirm,
-        )
-    }
-
     BackHandler(enabled = isAnySelected) {
         onAllChapterSelected(false)
     }
@@ -581,7 +540,6 @@ fun MangaScreenLargeImpl(
                 onClickRefresh = onRefresh,
                 onClickMigrate = onMigrateClicked,
                 onClickEditNotes = onEditNotesClicked,
-                onClickEditInfo = onEditInfoClicked,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 actionModeCounter = selectedChapterCount,
                 onSelectAll = { onAllChapterSelected(true) },
