@@ -56,7 +56,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.domain.chapter.interactor.FilterChaptersForDownload
-// 1. 匯入您建立的 SetCustomMangaInfo Use Case
 import mihon.domain.manga.interactor.SetCustomMangaInfo
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
@@ -122,7 +121,6 @@ class MangaScreenModel(
     private val setMangaCategories: SetMangaCategories = Injekt.get(),
     private val mangaRepository: MangaRepository = Injekt.get(),
     private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get(),
-    // 2. 注入您的 Use Case
     private val setCustomMangaInfo: SetCustomMangaInfo = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 ) : StateScreenModel<MangaScreenModel.State>(State.Loading) {
@@ -154,12 +152,9 @@ class MangaScreenModel(
     val isUpdateIntervalEnabled =
         LibraryPreferences.MANGA_OUTSIDE_RELEASE_PERIOD in libraryPreferences.autoUpdateMangaRestrictions().get()
 
-    private val selectedPositions: Array<Int> = arrayOf(-1, -1) // first and last selected index in list
+    private val selectedPositions: Array<Int> = arrayOf(-1, -1)
     private val selectedChapterIds: HashSet<Long> = HashSet()
 
-    /**
-     * Helper function to update the UI state only if it's currently in success state
-     */
     private inline fun updateSuccessState(func: (State.Success) -> State.Success) {
         mutableState.update {
             when (it) {
@@ -223,7 +218,6 @@ class MangaScreenModel(
             val needRefreshInfo = !manga.initialized
             val needRefreshChapter = chapters.isEmpty()
 
-            // Show what we have earlier
             mutableState.update {
                 State.Success(
                     manga = manga,
@@ -237,10 +231,8 @@ class MangaScreenModel(
                 )
             }
 
-            // Start observe tracking since it only needs mangaId
             observeTrackers()
 
-            // Fetch info-chapters when needed
             if (screenModelScope.isActive) {
                 val fetchFromSourceTasks = listOf(
                     async { if (needRefreshInfo) fetchMangaFromSource() },
@@ -249,7 +241,6 @@ class MangaScreenModel(
                 fetchFromSourceTasks.awaitAll()
             }
 
-            // Initial loading finished
             updateSuccessState { it.copy(isRefreshingData = false) }
         }
     }
@@ -266,11 +257,6 @@ class MangaScreenModel(
         }
     }
 
-    // Manga info - start
-
-    /**
-     * Fetch manga information from source.
-     */
     private suspend fun fetchMangaFromSource(manualFetch: Boolean = false) {
         val state = successState ?: return
         try {
@@ -279,7 +265,6 @@ class MangaScreenModel(
                 updateManga.awaitUpdateFromSource(state.manga, networkManga, manualFetch)
             }
         } catch (e: Throwable) {
-            // Ignore early hints "errors" that aren't handled by OkHttp
             if (e is HttpException && e.code == 103) return
 
             logcat(LogPriority.ERROR, e)
@@ -307,9 +292,6 @@ class MangaScreenModel(
         )
     }
 
-    /**
-     * Update favorite status of manga, (removes / adds) manga (to / from) library.
-     */
     fun toggleFavorite(
         onRemoved: () -> Unit,
         checkDuplicate: Boolean = true,
@@ -319,17 +301,13 @@ class MangaScreenModel(
             val manga = state.manga
 
             if (isFavorited) {
-                // Remove from library
                 if (updateManga.awaitUpdateFavorite(manga.id, false)) {
-                    // Remove covers and update last modified in db
                     if (manga.removeCovers() != manga) {
                         updateManga.awaitUpdateCoverLastModified(manga.id)
                     }
                     withUIContext { onRemoved() }
                 }
             } else {
-                // Add to library
-                // First, check if duplicate exists if callback is provided
                 if (checkDuplicate) {
                     val duplicates = getDuplicateLibraryManga(manga)
 
@@ -339,30 +317,25 @@ class MangaScreenModel(
                     }
                 }
 
-                // Now check if user previously set categories, when available
                 val categories = getCategories()
                 val defaultCategoryId = libraryPreferences.defaultCategory().get().toLong()
                 val defaultCategory = categories.find { it.id == defaultCategoryId }
                 when {
-                    // Default category set
                     defaultCategory != null -> {
                         val result = updateManga.awaitUpdateFavorite(manga.id, true)
                         if (!result) return@launchIO
                         moveMangaToCategory(defaultCategory)
                     }
 
-                    // Automatic 'Default' or no categories
                     defaultCategoryId == 0L || categories.isEmpty() -> {
                         val result = updateManga.awaitUpdateFavorite(manga.id, true)
                         if (!result) return@launchIO
                         moveMangaToCategory(null)
                     }
 
-                    // Choose a category
                     else -> showChangeCategoryDialog()
                 }
 
-                // Finally match with enhanced tracking when available
                 addTracks.bindEnhancedTrackers(manga, state.source)
             }
         }
@@ -395,7 +368,6 @@ class MangaScreenModel(
         screenModelScope.launchIO {
             if (
                 updateManga.awaitUpdateFetchInterval(
-                    // Custom intervals are negative
                     manga.copy(fetchInterval = -interval),
                 )
             ) {
@@ -405,37 +377,20 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Returns true if the manga has any downloads.
-     */
     private fun hasDownloads(): Boolean {
         val manga = successState?.manga ?: return false
         return downloadManager.getDownloadCount(manga) > 0
     }
 
-    /**
-     * Deletes all the downloads for the manga.
-     */
     private fun deleteDownloads() {
         val state = successState ?: return
         downloadManager.deleteManga(state.manga, state.source)
     }
 
-    /**
-     * Get user categories.
-     *
-     * @return List of categories, not including the default category
-     */
     suspend fun getCategories(): List<Category> {
         return getCategories.await().filterNot { it.isSystemCategory }
     }
 
-    /**
-     * Gets the category id's the manga is in, if the manga is not in a category, returns the default id.
-     *
-     * @param manga the manga to get categories from.
-     * @return Array of category ids the manga is in, if none returns default id
-     */
     private suspend fun getMangaCategoryIds(manga: Manga): List<Long> {
         return getCategories.await(manga.id)
             .map { it.id }
@@ -450,11 +405,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Move the given manga to categories.
-     *
-     * @param categories the selected categories.
-     */
     private fun moveMangaToCategories(categories: List<Category>) {
         val categoryIds = categories.map { it.id }
         moveMangaToCategory(categoryIds)
@@ -466,16 +416,10 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Move the given manga to the category.
-     *
-     * @param category the selected category, or null for default category.
-     */
     private fun moveMangaToCategory(category: Category?) {
         moveMangaToCategories(listOfNotNull(category))
     }
 
-    // 5. 新增儲存自訂資訊的函式
     fun saveCustomInfo(title: String, author: String, artist: String, description: String) {
         val currentManga = successState?.manga ?: return
         screenModelScope.launchIO {
@@ -489,10 +433,6 @@ class MangaScreenModel(
         }
         dismissDialog()
     }
-
-    // Manga info - end
-
-    // Chapters list - start
 
     private fun observeDownloads() {
         screenModelScope.launchIO {
@@ -562,9 +502,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Requests an updated list of chapters from the source.
-     */
     private suspend fun fetchChaptersFromSource(manualFetch: Boolean = false) {
         val state = successState ?: return
         try {
@@ -598,18 +535,12 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * @throws IllegalStateException if the swipe action is [LibraryPreferences.ChapterSwipeAction.Disabled]
-     */
     fun chapterSwipe(chapterItem: ChapterList.Item, swipeAction: LibraryPreferences.ChapterSwipeAction) {
         screenModelScope.launch {
             executeChapterSwipeAction(chapterItem, swipeAction)
         }
     }
 
-    /**
-     * @throws IllegalStateException if the swipe action is [LibraryPreferences.ChapterSwipeAction.Disabled]
-     */
     private fun executeChapterSwipeAction(
         chapterItem: ChapterList.Item,
         swipeAction: LibraryPreferences.ChapterSwipeAction,
@@ -641,9 +572,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Returns the next unread chapter or null if everything is read.
-     */
     fun getNextUnreadChapter(): Chapter? {
         val successState = successState ?: return null
         return successState.chapters.getNextUnread(successState.manga)
@@ -744,11 +672,6 @@ class MangaScreenModel(
         if (pointerPos != -1) markChaptersRead(prevChapters.take(pointerPos), true)
     }
 
-    /**
-     * Mark the selected chapter list as read/unread.
-     * @param chapters the list of selected chapters.
-     * @param read whether to mark chapters as read or unread.
-     */
     fun markChaptersRead(chapters: List<Chapter>, read: Boolean) {
         toggleAllSelection(false)
         if (chapters.isEmpty()) return
@@ -811,20 +734,12 @@ class MangaScreenModel(
             }
     }
 
-    /**
-     * Downloads the given list of chapters with the manager.
-     * @param chapters the list of chapters to download.
-     */
     private fun downloadChapters(chapters: List<Chapter>) {
         val manga = successState?.manga ?: return
         downloadManager.downloadChapters(manga, chapters)
         toggleAllSelection(false)
     }
 
-    /**
-     * Bookmarks the given list of chapters.
-     * @param chapters the list of chapters to bookmark.
-     */
     fun bookmarkChapters(chapters: List<Chapter>, bookmarked: Boolean) {
         screenModelScope.launchIO {
             chapters
@@ -835,11 +750,6 @@ class MangaScreenModel(
         toggleAllSelection(false)
     }
 
-    /**
-     * Deletes the given list of chapter.
-     *
-     * @param chapters the list of chapters to delete.
-     */
     fun deleteChapters(chapters: List<Chapter>) {
         screenModelScope.launchNonCancellable {
             try {
@@ -867,10 +777,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Sets the read filter and requests an UI update.
-     * @param state whether to display only unread chapters or all chapters.
-     */
     fun setUnreadFilter(state: TriState) {
         val manga = successState?.manga ?: return
 
@@ -884,10 +790,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Sets the download filter and requests an UI update.
-     * @param state whether to display only downloaded chapters or all chapters.
-     */
     fun setDownloadedFilter(state: TriState) {
         val manga = successState?.manga ?: return
 
@@ -902,10 +804,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Sets the bookmark filter and requests an UI update.
-     * @param state whether to display only bookmarked chapters or all chapters.
-     */
     fun setBookmarkedFilter(state: TriState) {
         val manga = successState?.manga ?: return
 
@@ -920,10 +818,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Sets the active display mode.
-     * @param mode the mode to set.
-     */
     fun setDisplayMode(mode: Long) {
         val manga = successState?.manga ?: return
 
@@ -932,10 +826,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Sets the sorting method and requests an UI update.
-     * @param sort the sorting mode.
-     */
     fun setSorting(sort: Long) {
         val manga = successState?.manga ?: return
 
@@ -985,7 +875,6 @@ class MangaScreenModel(
                         selectedPositions[0] = selectedIndex
                         selectedPositions[1] = selectedIndex
                     } else {
-                        // Try to select the items in-between when possible
                         val range: IntRange
                         if (selectedIndex < selectedPositions[0]) {
                             range = selectedIndex + 1..<selectedPositions[0]
@@ -994,7 +883,6 @@ class MangaScreenModel(
                             range = (selectedPositions[1] + 1)..<selectedIndex
                             selectedPositions[1] = selectedIndex
                         } else {
-                            // Just select itself
                             range = IntRange.EMPTY
                         }
 
@@ -1050,10 +938,6 @@ class MangaScreenModel(
         }
     }
 
-    // Chapters list - end
-
-    // Track sheet - start
-
     private fun observeTrackers() {
         val manga = successState?.manga ?: return
 
@@ -1062,7 +946,6 @@ class MangaScreenModel(
                 getTracks.subscribe(manga.id).catch { logcat(LogPriority.ERROR, it) },
                 trackerManager.loggedInTrackersFlow(),
             ) { mangaTracks, loggedInTrackers ->
-                // Show only if the service supports this manga's source
                 val supportedTrackers = loggedInTrackers.filter { (it as? EnhancedTracker)?.accept(source!!) ?: true }
                 val supportedTrackerIds = supportedTrackers.map { it.id }.toHashSet()
                 val supportedTrackerTracks = mangaTracks.filter { it.trackerId in supportedTrackerIds }
@@ -1081,9 +964,6 @@ class MangaScreenModel(
         }
     }
 
-    // Track sheet - end
-
-    // 3. 在 Dialog 密封介面中新增一個狀態
     sealed interface Dialog {
         data class ChangeCategory(
             val manga: Manga,
@@ -1093,7 +973,7 @@ class MangaScreenModel(
         data class DuplicateManga(val manga: Manga, val duplicates: List<MangaWithChapterCount>) : Dialog
         data class Migrate(val target: Manga, val current: Manga) : Dialog
         data class SetFetchInterval(val manga: Manga) : Dialog
-        data class EditInfo(val manga: Manga) : Dialog // 新增的 Dialog 狀態
+        data class EditInfo(val manga: Manga) : Dialog
         data object SettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
@@ -1103,7 +983,6 @@ class MangaScreenModel(
         updateSuccessState { it.copy(dialog = null) }
     }
 
-    // 4. 新增顯示 Dialog 的函式
     fun showEditInfoDialog() {
         val manga = successState?.manga ?: return
         updateSuccessState { it.copy(dialog = Dialog.EditInfo(manga)) }
@@ -1195,10 +1074,6 @@ class MangaScreenModel(
             val filterActive: Boolean
                 get() = scanlatorFilterActive || manga.chaptersFiltered()
 
-            /**
-             * Applies the view filters to the list of chapters obtained from the database.
-             * @return an observable of the list of chapters filtered and sorted.
-             */
             private fun List<ChapterList.Item>.applyFilters(manga: Manga): Sequence<ChapterList.Item> {
                 val isLocalManga = manga.isLocal()
                 val unreadFilter = manga.unreadFilter
