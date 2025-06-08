@@ -4,7 +4,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import eu.kanade.tachiyomi.source.CatalogueSource
-import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.FilterList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,6 +13,7 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.model.SourceWithCount
 import tachiyomi.domain.source.repository.SourceRepository
 import tachiyomi.domain.source.service.SourceManager
+import eu.kanade.tachiyomi.source.Source
 
 class SourceRepositoryImpl(
     private val sourceManager: SourceManager,
@@ -49,11 +49,8 @@ class SourceRepositoryImpl(
             }
     }
 
-    override fun search(
-        source: CatalogueSource,
-        query: String,
-        filterList: FilterList,
-    ): Flow<PagingData<Manga>> {
+    override fun search(sourceId: Long, query: String, filterList: FilterList): PagingData<Manga> {
+        val source = sourceManager.get(sourceId) as? CatalogueSource ?: return PagingData.empty()
         return Pager(
             config = PagingConfig(pageSize = 25),
             pagingSourceFactory = {
@@ -67,7 +64,8 @@ class SourceRepositoryImpl(
         ).flow
     }
 
-    override fun getPopular(source: CatalogueSource): Flow<PagingData<Manga>> {
+    override fun getPopular(sourceId: Long): PagingData<Manga> {
+        val source = sourceManager.get(sourceId) as? CatalogueSource ?: return PagingData.empty()
         return Pager(
             config = PagingConfig(pageSize = 25),
             pagingSourceFactory = {
@@ -81,7 +79,8 @@ class SourceRepositoryImpl(
         ).flow
     }
 
-    override fun getLatest(source: CatalogueSource): Flow<PagingData<Manga>> {
+    override fun getLatest(sourceId: Long): PagingData<Manga> {
+        val source = sourceManager.get(sourceId) as? CatalogueSource ?: return PagingData.empty()
         return Pager(
             config = PagingConfig(pageSize = 25),
             pagingSourceFactory = {
