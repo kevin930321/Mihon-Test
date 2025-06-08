@@ -38,14 +38,11 @@ fun MangaToolbar(
     onClickRefresh: () -> Unit,
     onClickMigrate: (() -> Unit)?,
     onClickEditNotes: () -> Unit,
-    onClickEditInfo: (() -> Unit)?, // ADDED: Callback for the new "Edit info" action
-
-    // For action mode
+    onClickEditInfo: (() -> Unit)?,
     actionModeCounter: Int,
     onCancelActionMode: () -> Unit,
     onSelectAll: () -> Unit,
     onInvertSelection: () -> Unit,
-
     titleAlphaProvider: () -> Float,
     backgroundAlphaProvider: () -> Float,
     modifier: Modifier = Modifier,
@@ -118,7 +115,6 @@ fun MangaToolbar(
                             onClick = onClickRefresh,
                         ),
                     )
-                    // ADDED: The "Edit info" action to the overflow menu
                     if (onClickEditInfo != null) {
                         add(
                             AppBar.OverflowAction(
